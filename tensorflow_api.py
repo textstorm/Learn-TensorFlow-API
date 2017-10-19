@@ -42,3 +42,22 @@ print("var3: {}".format(var3.name))
 #var1: var_1:0
 #var2: foo/bar/var_2:0
 #var3: foo/bar/var_2:0
+
+#the same variable in different graph can have the same name
+g1 = tf.Graph()
+with g1.as_default():
+    with tf.variable_scope("foo"):
+        with tf.variable_scope("bar") as scp:
+            var1 = tf.get_variable(name="var",shape=[1])
+
+g2 = tf.Graph()
+with g2.as_default():
+    with tf.variable_scope("foo"):
+        with tf.variable_scope("bar") as scp:
+            var2 = tf.get_variable(name="var",shape=[1])
+
+print("var1: {}".format(var1.name))
+print("var2: {}".format(var2.name))
+
+#var1: foo/bar/var:0
+#var2: foo/bar/var:0
