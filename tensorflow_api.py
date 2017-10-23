@@ -46,18 +46,90 @@ print("var3: {}".format(var3.name))
 #the same variable in different graph can have the same name
 g1 = tf.Graph()
 with g1.as_default():
-    with tf.variable_scope("foo"):
-        with tf.variable_scope("bar") as scp:
-            var1 = tf.get_variable(name="var",shape=[1])
+  with tf.variable_scope("foo"):
+    with tf.variable_scope("bar") as scp:
+      var1 = tf.get_variable(name="var",shape=[1])
 
 g2 = tf.Graph()
 with g2.as_default():
-    with tf.variable_scope("foo"):
-        with tf.variable_scope("bar") as scp:
-            var2 = tf.get_variable(name="var",shape=[1])
+  with tf.variable_scope("foo"):
+    with tf.variable_scope("bar") as scp:
+      var2 = tf.get_variable(name="var",shape=[1])
 
 print("var1: {}".format(var1.name))
 print("var2: {}".format(var2.name))
 
 #var1: foo/bar/var:0
 #var2: foo/bar/var:0
+
+#三、Recurrent Neural Networks(RNN)
+#1.build LSTM(GRU) cell
+cell = tf.contrib.rnn.BasicLSTMCell(num_units=32, forget_bias=0.0)
+
+#2.build rnn
+#dynamic_rnn If there is no initial_state, you must give a dtype.
+#as seen in session, feed_dict is not necessary
+import numpy as np
+rnn_input = np.random.randn(2, 6, 8)
+rnn_input[1,4:] = 0
+sequence_length = [6, 4]
+outputs, state = tf.nn.dynamic_rnn(
+  cell=cell,
+  inputs=rnn_input,
+  dtype=tf.float64,
+  sequence_length=sequence_length)
+
+with tf.Session() as sess:
+  sess.run(tf.global_variables_initializer())
+  outputs, state = sess.run([outputs, state], feed_dict=None)
+
+assert outputs.shape == (2, 6, 32)
+assert outputs[1,4,:].all() == np.zeros(cell.output_size).all()
+
+#3.build bidirectional rnn
+outputs, states  = tf.nn.bidirectional_dynamic_rnn(
+  cell_fw=cell,
+  cell_bw=cell,
+  dtype=tf.float64,
+  sequence_length=sequence_length,
+  inputs=rnn_input)
+
+with tf.Session() as sess:
+  sess.run(tf.global_variables_initializer())
+  outputs, state = sess.run([outputs, state], feed_dict=None)
+
+output_fw, output_bw = outputs
+states_fw, states_bw = states
+
+print(output_fw.shape)
+print(output_bw.shape)
+print(states_fw.shape)
+print(states_bw.shape)
+
+#4.get dynamic_rnn last time output
+import numpy as np
+rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.int32)
+rnn_input.dtype = np.float32
+sequence_length = [3, 1]
+
+cell = tf.contrib.rnn.LSTMCell(num_units=32)
+cell_state = cell.zero_state(len(sequence_length), tf.float32)
+outputs, _ = tf.nn.dynamic_rnn(
+  cell=cell,
+  inputs=rnn_input,
+  sequence_length=sequence_length,
+  dtype=tf.float32,
+  initial_state=cell_state)
+
+#because tensorflow doesn't support advanced slice, so we cant't get the last relevent
+# by outputs[:, length - 1] like numpy, if we run first, then we can't train end-to-end
+def get_last_relevent(outputs, length):
+  batch_size, max_length, hidden_size = outputs.get_shape()
+  outputs_flat = tf.reshape(outputs, [-1, hidden_size])
+  tf.gather()
+
+with tf.Session() as sess:
+  sess.run(tf.global_variables_initializer())
+  outputs = sess.run([outputs], feed_dict=None)
