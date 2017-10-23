@@ -1,4 +1,4 @@
-
+#tf.__version__ >=1.3
 import tensorflow as tf
 #一、Matrix operations
 #1.simple mathematical operation takes an addition as example
@@ -87,7 +87,7 @@ assert outputs.shape == (2, 6, 32)
 assert outputs[1,4,:].all() == np.zeros(cell.output_size).all()
 
 #3.build bidirectional rnn
-outputs, states  = tf.nn.bidirectional_dynamic_rnn(
+outputs, state = tf.nn.bidirectional_dynamic_rnn(
   cell_fw=cell,
   cell_bw=cell,
   dtype=tf.float64,
@@ -99,24 +99,28 @@ with tf.Session() as sess:
   outputs, state = sess.run([outputs, state], feed_dict=None)
 
 output_fw, output_bw = outputs
-states_fw, states_bw = states
+state_fw, state_bw = state
 
 print(output_fw.shape)
 print(output_bw.shape)
-print(states_fw.shape)
-print(states_bw.shape)
+print(state_fw.h.shape)
+print(state_bw.h.shape)
+
+#(2, 6, 32)
+#(2, 6, 32)
+#(2, 32)
+#(2, 32)
 
 #4.get dynamic_rnn last time output
 import numpy as np
 rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
                     [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
-                    dtype=np.int32)
-rnn_input.dtype = np.float32
+                    dtype=np.float32)
 sequence_length = [3, 1]
 
 cell = tf.contrib.rnn.LSTMCell(num_units=32)
 cell_state = cell.zero_state(len(sequence_length), tf.float32)
-outputs, _ = tf.nn.dynamic_rnn(
+outputs, state = tf.nn.dynamic_rnn(
   cell=cell,
   inputs=rnn_input,
   sequence_length=sequence_length,
@@ -126,10 +130,19 @@ outputs, _ = tf.nn.dynamic_rnn(
 #because tensorflow doesn't support advanced slice, so we cant't get the last relevent
 # by outputs[:, length - 1] like numpy, if we run first, then we can't train end-to-end
 def get_last_relevent(outputs, length):
-  batch_size, max_length, hidden_size = outputs.get_shape()
+  if not isinstance(length, np.ndarray):
+    length = np.array(length)
+
+  batch_size, max_length, hidden_size = outputs.get_shape().as_list()
+  index = [max_length * i for i in range(batch_size)] + (length - 1)
   outputs_flat = tf.reshape(outputs, [-1, hidden_size])
-  tf.gather()
+  last_relevent = tf.gather(outputs_flat, index)
+  return last_relevent
+
+relevant = get_last_relevent(outputs, sequence_length)
 
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
-  outputs = sess.run([outputs], feed_dict=None)
+  outputs, state, last_relevent = sess.run([outputs, state, relevant], feed_dict=None)
+
+assert state.h.all() == last_relevent.all()
