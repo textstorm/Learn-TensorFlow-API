@@ -87,6 +87,7 @@ assert outputs.shape == (2, 6, 32)
 assert outputs[1,4,:].all() == np.zeros(cell.output_size).all()
 
 #3.build bidirectional rnn
+#can use cell can also use cell_fw, cell_bw(nmt used)
 outputs, state = tf.nn.bidirectional_dynamic_rnn(
   cell_fw=cell,
   cell_bw=cell,
@@ -186,6 +187,77 @@ with tf.Session() as sess:
 
 assert state_concated[-1,:,:].all() == last_relevant.all()
 
-#5.multi-layer test
+#5.multi-layers rnn test
+import tensorflow as tf
+import numpy as np
+rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+sequence_length = [3, 1]
+
+cell_list = []
+num_layers = 3
+for _ in range(num_layers):
+  cell = tf.contrib.rnn.LSTMCell(num_units=8)
+  cell_list.append(cell)
+cell = tf.contrib.rnn.MultiRNNCell(cell_list)
+cell_state = cell.zero_state(len(sequence_length), tf.float32)
+
+outputs, state = tf.nn.dynamic_rnn(
+  cell=cell,
+  inputs=rnn_input,
+  sequence_length=sequence_length,
+  initial_state=cell_state)
+
+with tf.Session() as sess:
+  sess.run(tf.global_variables_initializer())
+  outputs_, state_ = sess.run([outputs, state], feed_dict=None)
+
+#multi-layers process can be summarized as
+def build_rnn_cell(num_units, num_layers):
+  cell_list = []
+  num_layers = 3
+  for _ in range(num_layers):
+    cell = tf.contrib.rnn.LSTMCell(num_units)
+    cell_list.append(cell)
+  if num_layers == 1:
+    return cell_list[0]
+  else:
+    return tf.contrib.rnn.MultiRNNCell(cell_list)
+
+#6.multi-layers bidirectional rnn
+import tensorflow as tf
+import numpy as np
+rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+sequence_length = [3, 1]
+
+def build_rnn_cell(num_units, num_layers):
+  cell_list = []
+  num_layers = 3
+  for _ in range(num_layers):
+    cell = tf.contrib.rnn.LSTMCell(num_units)
+    cell_list.append(cell)
+  if num_layers == 1:
+    return cell_list[0]
+  else:
+    return tf.contrib.rnn.MultiRNNCell(cell_list)
+
+cell_fw = build_rnn_cell(8, 2)
+cell_bw = build_rnn_cell(8, 2)
+outputs, state = tf.nn.bidirectional_dynamic_rnn(
+  cell_fw=cell_fw, 
+  cell_bw=cell_bw,
+  inputs=rnn_input, 
+  dtype=tf.float32,
+  sequence_length=sequence_length)
+
+outputs_fw, output_bw = outputs
+state_fw, state_bw = state
+print(outputs_fw.shape)
+print(output_bw.shape)
+#(2, 4, 8)
+#(2, 4, 8)
 
 #5.attention test
