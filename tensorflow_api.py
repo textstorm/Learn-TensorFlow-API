@@ -216,7 +216,6 @@ with tf.Session() as sess:
 #multi-layers process can be summarized as
 def build_rnn_cell(num_units, num_layers):
   cell_list = []
-  num_layers = 3
   for _ in range(num_layers):
     cell = tf.contrib.rnn.LSTMCell(num_units)
     cell_list.append(cell)
@@ -232,10 +231,10 @@ rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
                     [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
                     dtype=np.float32)
 sequence_length = [3, 1]
+num_layers = 2
 
 def build_rnn_cell(num_units, num_layers):
   cell_list = []
-  num_layers = 3
   for _ in range(num_layers):
     cell = tf.contrib.rnn.LSTMCell(num_units)
     cell_list.append(cell)
@@ -244,8 +243,8 @@ def build_rnn_cell(num_units, num_layers):
   else:
     return tf.contrib.rnn.MultiRNNCell(cell_list)
 
-cell_fw = build_rnn_cell(8, 2)
-cell_bw = build_rnn_cell(8, 2)
+cell_fw = build_rnn_cell(8, num_layers)
+cell_bw = build_rnn_cell(8, num_layers)
 outputs, state = tf.nn.bidirectional_dynamic_rnn(
   cell_fw=cell_fw, 
   cell_bw=cell_bw,
@@ -260,4 +259,18 @@ print(output_bw.shape)
 #(2, 4, 8)
 #(2, 4, 8)
 
+outputs_concated = tf.concat(outputs, 2)
+print(state)
+#the last state of each layer (fw_or_bw, layers)
+#((LSTMStateTuple(c=<>, h=<>),  1
+#  LSTMStateTuple(c=<>, h=<>)), 2
+# (LSTMStateTuple(c=<>, h=<>),  1
+#  LSTMStateTuple(c=<>, h=<>))) 2
+
+state_concated = []
+for layer_id in range(num_layers):
+  state_concated.append(state[0][layer_id])
+  state_concated.append(state[1][layer_id])
+
+state_concated = tuple(state_concated)
 #5.attention test
