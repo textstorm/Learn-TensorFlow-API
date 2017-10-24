@@ -262,10 +262,10 @@ print(output_bw.shape)
 outputs_concated = tf.concat(outputs, 2)
 print(state)
 #the last state of each layer (fw_or_bw, layers)
-#((LSTMStateTuple(c=<>, h=<>),  1
-#  LSTMStateTuple(c=<>, h=<>)), 2
-# (LSTMStateTuple(c=<>, h=<>),  1
-#  LSTMStateTuple(c=<>, h=<>))) 2
+#((LSTMStateTuple(c=<>, h=<>),  fw_1
+#  LSTMStateTuple(c=<>, h=<>)), fw_2
+# (LSTMStateTuple(c=<>, h=<>),  bw_1
+#  LSTMStateTuple(c=<>, h=<>))) bw_2
 
 state_concated = []
 for layer_id in range(num_layers):
@@ -273,4 +273,54 @@ for layer_id in range(num_layers):
   state_concated.append(state[1][layer_id])
 
 state_concated = tuple(state_concated)
+
+#7.state test (important)
+#in bidirection rnn the 1 layer include 2 layers rnn
+#test one layer bidirection rnn(two layers)
+import tensorflow as tf
+import numpy as np
+num_layers = 2
+
+rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+sequence_length = [3, 1]
+
+cell_fw = tf.contrib.rnn.BasicLSTMCell(num_units=8)
+cell_bw = tf.contrib.rnn.BasicLSTMCell(num_units=8)
+cell_state = cell_fw.zero_state(len(sequence_length), tf.float32)
+outputs, state = tf.nn.bidirectional_dynamic_rnn(
+  cell_fw=cell_fw,
+  cell_bw=cell_bw,
+  inputs=rnn_input,
+  sequence_length=sequence_length,
+  dtype=tf.float32,
+  initial_state_fw=cell_state,
+  initial_state_bw=cell_state)
+
+outputs_concated = tf.concat(outputs, 2)
+state_concated = tf.concat(state, 2)
+state_sorted = []
+for layer_id in range(num_layers):
+  state_sorted.append(state[0][layer_id])
+  state_sorted.append(state[1][layer_id])
+state_sorted = tuple(state_sorted)
+        
+def get_last_relevant(outputs_concated, length):
+  if not isinstance(length, np.ndarray):
+    length = np.array(length)
+
+  batch_size, max_length, hidden_size = outputs_concated.get_shape().as_list()
+  index = [max_length * i for i in range(batch_size)] + (length - 1)
+  outputs_flat = tf.reshape(outputs_concated, [-1, hidden_size])
+  last_relevant = tf.gather(outputs_flat, index)
+  return last_relevant
+
+relevant = get_last_relevant(outputs_concated, sequence_length)
+
+with tf.Session() as sess:
+  sess.run(tf.global_variables_initializer())
+  outputs_, outputs_concated, state_concated, last_relevant, state_sorted_, state_ = sess.run(
+    [outputs, outputs_concated, state_concated, relevant, state_sorted, state], feed_dict=None)
+
 #5.attention test
