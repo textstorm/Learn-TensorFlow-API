@@ -118,7 +118,7 @@ rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
                     dtype=np.float32)
 sequence_length = [3, 1]
 
-cell = tf.contrib.rnn.LSTMCell(num_units=32)
+cell = tf.contrib.rnn.LSTMCell(num_units=8)
 cell_state = cell.zero_state(len(sequence_length), tf.float32)
 outputs, state = tf.nn.dynamic_rnn(
   cell=cell,
@@ -127,22 +127,65 @@ outputs, state = tf.nn.dynamic_rnn(
   dtype=tf.float32,
   initial_state=cell_state)
 
-#because tensorflow doesn't support advanced slice, so we cant't get the last relevent
+#because tensorflow doesn't support advanced slice, so we cant't get the last relevant
 # by outputs[:, length - 1] like numpy, if we run first, then we can't train end-to-end
-def get_last_relevent(outputs, length):
+def get_last_relevant(outputs, length):
   if not isinstance(length, np.ndarray):
     length = np.array(length)
 
   batch_size, max_length, hidden_size = outputs.get_shape().as_list()
   index = [max_length * i for i in range(batch_size)] + (length - 1)
   outputs_flat = tf.reshape(outputs, [-1, hidden_size])
-  last_relevent = tf.gather(outputs_flat, index)
-  return last_relevent
+  last_relevant = tf.gather(outputs_flat, index)
+  return last_relevant
 
-relevant = get_last_relevent(outputs, sequence_length)
+relevant = get_last_relevant(outputs, sequence_length)
+#relevant_ = outputs[:,:sequence_length,:] #can't fetch last relevant in this way
+with tf.Session() as sess:
+  sess.run(tf.global_variables_initializer())
+  outputs, state, last_relevant = sess.run([outputs, state, relevant], feed_dict=None)
+
+assert state.h.all() == last_relevant.all()
+
+#5.get bidirectional dynamic_rnn last time output
+rnn_input = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+sequence_length = [3, 1]
+
+cell = tf.contrib.rnn.LSTMCell(num_units=8)
+cell_state = cell.zero_state(len(sequence_length), tf.float32)
+outputs, state = tf.nn.bidirectional_dynamic_rnn(
+  cell_fw=cell,
+  cell_bw=cell,
+  inputs=rnn_input,
+  sequence_length=sequence_length,
+  dtype=tf.float32,
+  initial_state_fw=cell_state,
+  initial_state_bw=cell_state)
+
+outputs_concated = tf.concat(outputs, 2)
+state_concated = tf.concat(state, 2)
+
+def get_last_relevant(outputs_concated, length):
+  if not isinstance(length, np.ndarray):
+    length = np.array(length)
+
+  batch_size, max_length, hidden_size = outputs_concated.get_shape().as_list()
+  index = [max_length * i for i in range(batch_size)] + (length - 1)
+  outputs_flat = tf.reshape(outputs_concated, [-1, hidden_size])
+  last_relevant = tf.gather(outputs_flat, index)
+  return last_relevant
+
+relevant = get_last_relevant(outputs_concated, sequence_length)
 
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
-  outputs, state, last_relevent = sess.run([outputs, state, relevant], feed_dict=None)
+  outputs_, outputs_concated, state_concated, last_relevant = sess.run(
+    [outputs, outputs_concated, state_concated, relevant], feed_dict=None)
 
-assert state.h.all() == last_relevent.all()
+assert state_concated[-1,:,:].all() == last_relevant.all()
+
+#5.multi-layer test
+
+#5.attention test
