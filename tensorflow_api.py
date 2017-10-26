@@ -28,6 +28,7 @@ assert (f_a.eval(session=session) == np.array([2, 2, 2, 2, 2])).all()
 
 #3 tensor batch replicate
 #The default first dimension is batch, batch in each sample repeated n times
+#tile_batch
 ta = np.array([[1, 1, 1],[2, 2, 2]])
 a_rep = tf.contrib.seq2seq.tile_batch(ta, 3)
 session = tf.Session()
@@ -37,6 +38,33 @@ print a_rep.eval(session=session)
 from tensorflow.python.util import nest
 a = nest.map_structure(lambda x: x + 1, [[1,2],[3,4]])
 assert a == [[2,3],[4,5]]
+
+#reverse sequence
+#tf.reverse_sequence(input, seq_lengths, seq_axis=None, batch_axis=None, name=None, seq_dim=None,
+#batch_dim=None)
+#seq_axis, seq_dim equivalence the same as batch_axis, batch_dim
+inputs = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+sequence_length = [3, 2]
+reverse_inputs = tf.reverse_sequence(
+  input=rnn_input, 
+  seq_lengths=sequence_length, 
+  seq_axis=1,
+  batch_axis=0)
+
+with tf.Session() as sess:
+  reverse_inputs_ = sess.run(reverse_inputs)
+#output:
+#[[[ 2.  2.  2.]
+#  [ 1.  1.  1.]
+#  [ 0.  0.  0.]
+#  [ 3.  3.  3.]]
+
+# [[ 7.  7.  7.]
+#  [ 6.  6.  6.]
+#  [ 8.  8.  8.]
+#  [ 9.  9.  9.]]]
 
 #二、Variables and operations
 #1. variable and get_variable
