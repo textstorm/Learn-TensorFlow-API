@@ -1,13 +1,34 @@
 #tf.__version__ >=1.3
 import tensorflow as tf
+import numpy as np
 #一、Matrix operations
 #1.simple mathematical operation takes an addition as example
 mat = tf.constant([[1,2,3],[4,5,6],[7,8,9],[10,11,12]])
 add_row = tf.reduce_sum(mat, 1)
 add_col = tf.reduce_sum(mat, 0)
 session = tf.Session()
-assert add_row.eval(session=session).all() == np.array([6, 15, 24, 33]).all()
-assert add_col.eval(session=session).all() == np.array([22, 26, 30]).all()
+assert (add_row.eval(session=session) == np.array([6, 15, 24, 33])).all()
+assert (add_col.eval(session=session) == np.array([22, 26, 30])).all()
+
+#2.tensor replicate
+#tile, second parameters 1-D. Length must be the same as the number of dimensions in input
+#tf.tile(input, multiples, name=None)
+ta = np.array([1, 2, 3])
+tb = np.array([[1, 2, 3],[4, 5, 6]])
+a_rep = tf.tile(ta, [2])
+b_rep = tf.tile(tb, [1, 2])
+session = tf.Session()
+assert (a_rep.eval(session=session) == np.array([1, 2, 3, 1, 2, 3])).all()
+assert (b_rep.eval(session=session) == np.array([[1, 2, 3, 1, 2, 3],[4, 5, 6, 4, 5, 6]])).all()
+
+#tf.fill(dims, value, name=None)
+#value is a scalar
+f_a = tf.fill([5], 2)
+assert (f_a.eval(session=session) == np.array([2, 2, 2, 2, 2])).all()
+
+#3 tensor batch replicate
+ta = np.array([[1, 1, 1],[2, 2, 2]])
+a_rep = tf.contrib.seq2seq.tile_batch(ta, 3)
 
 #二、Variables and operations
 #1. variable and get_variable
