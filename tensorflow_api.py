@@ -27,8 +27,16 @@ f_a = tf.fill([5], 2)
 assert (f_a.eval(session=session) == np.array([2, 2, 2, 2, 2])).all()
 
 #3 tensor batch replicate
+#The default first dimension is batch, batch in each sample repeated n times
 ta = np.array([[1, 1, 1],[2, 2, 2]])
 a_rep = tf.contrib.seq2seq.tile_batch(ta, 3)
+session = tf.Session()
+print a_rep.eval(session=session)
+
+#list operation like numpy
+from tensorflow.python.util import nest
+a = nest.map_structure(lambda x: x + 1, [[1,2],[3,4]])
+assert a == [[2,3],[4,5]]
 
 #二、Variables and operations
 #1. variable and get_variable
