@@ -588,14 +588,26 @@ outputs, state = tf.nn.bidirectional_dynamic_rnn(
 
 outputs_concated = tf.concat(outputs, 2)
 state_sorted = []
-for _ in range(num_bi_layers):
-
+for layer_id in range(num_bi_layers):
+  state_sorted.append(state[0][layer_id])
+  state_sorted.append(state[1][layer_id])
 state_sorted = tuple(state_sorted)
 
 with tf.Session() as sess:
   sess.run(tf.global_variables_initializer())
-  outputs_, state_, outputs_concated_, = sess.run(
-    [outputs, state, outputs_concated], feed_dict=None)
+  outputs_, state_, outputs_concated_, state_sorted_ = sess.run(
+    [outputs, state, outputs_concated, state_sorted], feed_dict=None)
+
+#raw state orgnazation structure:
+#(fw/bw, layers, c/h)
+#((LSTMTuple(), LSTMTuple()), (LSTMTuple(), LSTMTuple()))
+#((LSTMStateTuple(c=<>, h=<>),  fw_1
+#  LSTMStateTuple(c=<>, h=<>)), fw_2
+# (LSTMStateTuple(c=<>, h=<>),  bw_1
+#  LSTMStateTuple(c=<>, h=<>))) bw_2
+
+#outputs orgnazation structure:
+#(output_fw, output_bw)
 
 #11.attention test
 
