@@ -610,6 +610,13 @@ with tf.Session() as sess:
 #(output_fw, output_bw)
 
 #11.attention test
+#simply implement the attention without using the wrapper
+outputs = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+
+
+
 
 #Four. Sequence operations
 #structure:
@@ -657,3 +664,13 @@ structure = ((3, 4), 5, (6, 7, (9, 10), 8))
 flat = ["a", "b", "c", "d", "e", "f", "g", "h"]
 packed = nest.pack_sequence_as(structure, flat)
 assert packed == (('a', 'b'), 'c', ('d', 'e', ('f', 'g'), 'h'))
+
+#Other
+#1. loop
+#tf.while_loop(cond, body, loop_vars)
+i = tf.constant(0)
+c = lambda i: tf.less(i, 10)
+b = lambda i: tf.add(i, 1)
+r = tf.while_loop(c, b, [i])
+session = tf.Session()
+assert r.eval(session=session) == 10
