@@ -1,4 +1,5 @@
 #tf.__version__ >=1.3
+#python 2.7
 import tensorflow as tf
 import numpy as np
 #One. Matrix operations
@@ -611,6 +612,7 @@ with tf.Session() as sess:
 
 #11.attention test
 #simply implement the attention without using the wrapper
+#
 outputs = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
                     [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
                     dtype=np.float32)
@@ -625,7 +627,7 @@ attention = tf.reduce_sum(tmp, 2)
 
 with tf.Session() as sess:
     print sess.run(attention)
-    
+
 # [[  0.   6.  12.  18.]
 #  [ 36.  42.  48.  54.]]
 
@@ -685,3 +687,61 @@ b = lambda i: tf.add(i, 1)
 r = tf.while_loop(c, b, [i])
 session = tf.Session()
 assert r.eval(session=session) == 10
+
+#gradient calculation
+#1.simple calculate gradient
+#the object of the gradient calculation can be a constant
+x = tf.constant([1, 2, 3, 4], dtype=tf.float32)
+y = x ** 2
+g = tf.gradients(y, x)
+session = tf.Session()
+print session.run(g)
+#[array([ 2.,  4.,  6.,  8.], dtype=float32)]
+
+#2.do other operation on the gradient
+#the object of the gradient calculation is variables
+#if variables are present must use tf.global_variables_initilizer
+with tf.Graph().as_default():
+  x = tf.Variable([1, 2, 3, 4], dtype=tf.float32)
+  y = x ** 2
+  tvar = tf.trainable_variables()
+  g = tf.gradients(y, tvar)
+  g_cliped, global_norm = tf.clip_by_global_norm(g, clip_norm=3.0)
+  session = tf.Session()
+  session.run(tf.global_variables_initializer())
+  print session.run(g_cliped)
+#[array([ 2.,  4.,  6.,  8.], dtype=float32)]
+
+#3.Apply the gradient
+with tf.Graph().as_default():
+  x = tf.Variable([1, 2, 3, 4], dtype=tf.float32)
+  y = x ** 2
+  tvar = tf.trainable_variables()
+  g = tf.gradients(y, tvar)
+  g_cliped, global_norm = tf.clip_by_global_norm(g, clip_norm=3.0)
+  opt = tf.train.GradientDescentOptimizer(learning_rate=1.0)
+  update = opt.apply_gradients(zip(g_cliped, tvar))
+  session = tf.Session()
+  session.run(tf.global_variables_initializer())
+  g_cliped_, update_ = session.run([g_cliped, update])
+  x_ = session.run(x)
+  print g_cliped_
+  print x_
+
+#g_cliped_: [array([ 0.54772258,  1.09544516,  1.64316773,  2.19089031], dtype=float32)]
+#x_: [ 0.45227742  0.90455484  1.35683227  1.80910969]
+
+#Apply the gradient the second method
+with tf.Graph().as_default():
+  x = tf.Variable([1, 2, 3, 4], dtype=tf.float32)
+  y = x ** 2
+  opt = tf.train.GradientDescentOptimizer(learning_rate=1.0)
+  grads_and_vars = opt.compute_gradients(y)
+  grads_and_vars = [(tf.clip_by_global_norm(g, clip_norm=3.0),v) for g, v in grads_and_vars]
+  update = opt.apply_gradients(grads_and_vars)
+  session = tf.Session()
+  session.run(tf.global_variables_initializer())
+  g_cliped_, update_ = session.run([g_cliped, update])
+  x_ = session.run(x)
+  print g_cliped_
+  print x_
