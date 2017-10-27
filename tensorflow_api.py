@@ -1,7 +1,7 @@
 #tf.__version__ >=1.3
 import tensorflow as tf
 import numpy as np
-#一、Matrix operations
+#One. Matrix operations
 #1.simple mathematical operation takes an addition as example
 mat = tf.constant([[1,2,3],[4,5,6],[7,8,9],[10,11,12]])
 add_row = tf.reduce_sum(mat, 1)
@@ -34,39 +34,8 @@ a_rep = tf.contrib.seq2seq.tile_batch(ta, 3)
 session = tf.Session()
 print a_rep.eval(session=session)
 
-#list operation like numpy
-from tensorflow.python.util import nest
-a = nest.map_structure(lambda x: x + 1, [[1,2],[3,4]])
-assert a == [[2,3],[4,5]]
 
-#reverse sequence
-#tf.reverse_sequence(input, seq_lengths, seq_axis=None, batch_axis=None, name=None, seq_dim=None,
-#batch_dim=None)
-#seq_axis, seq_dim equivalence the same as batch_axis, batch_dim
-inputs = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
-                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
-                    dtype=np.float32)
-sequence_length = [3, 2]
-reverse_inputs = tf.reverse_sequence(
-  input=rnn_input, 
-  seq_lengths=sequence_length, 
-  seq_axis=1,
-  batch_axis=0)
-
-with tf.Session() as sess:
-  reverse_inputs_ = sess.run(reverse_inputs)
-#output:
-#[[[ 2.  2.  2.]
-#  [ 1.  1.  1.]
-#  [ 0.  0.  0.]
-#  [ 3.  3.  3.]]
-
-# [[ 7.  7.  7.]
-#  [ 6.  6.  6.]
-#  [ 8.  8.  8.]
-#  [ 9.  9.  9.]]]
-
-#二、Variables and operations
+#Two. Variables and operations
 #1. variable and get_variable
 #use tf.Variable the var can have the same name but not with get_variable
 var1 = tf.Variable([1], name="var")
@@ -119,7 +88,7 @@ print("var2: {}".format(var2.name))
 #var1: foo/bar/var:0
 #var2: foo/bar/var:0
 
-#三、Recurrent Neural Networks(RNN)
+#Three. Recurrent Neural Networks(RNN)
 #1.build LSTM(GRU) cell
 cell = tf.contrib.rnn.BasicLSTMCell(num_units=32, forget_bias=0.0)
 
@@ -381,3 +350,45 @@ with tf.Session() as sess:
     [outputs, outputs_concated, state_concated, relevant, state_sorted, state], feed_dict=None)
 
 #5.attention test
+
+#Four. Sequence operations
+#1 list operation like numpy
+from tensorflow.python.util import nest
+a = nest.map_structure(lambda x: x + 1, [[1,2],[3,4]])
+assert a == [[2,3],[4,5]]
+#if a is have 3 dims, can't be flatten
+a = nest.flatten(((3, 4), 5, (6, 7, (9, 10), 8)))
+assert a == [3, 4, 5, 6, 7, 9, 10, 8]
+
+#2. reverse sequence
+#tf.reverse_sequence(input, seq_lengths, seq_axis=None, batch_axis=None, name=None, seq_dim=None,
+#batch_dim=None)
+#seq_axis, seq_dim equivalence the same as batch_axis, batch_dim
+inputs = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
+                    [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
+                    dtype=np.float32)
+sequence_length = [3, 2]
+reverse_inputs = tf.reverse_sequence(
+  input=rnn_input, 
+  seq_lengths=sequence_length, 
+  seq_axis=1,
+  batch_axis=0)
+
+with tf.Session() as sess:
+  reverse_inputs_ = sess.run(reverse_inputs)
+#output:
+#[[[ 2.  2.  2.]
+#  [ 1.  1.  1.]
+#  [ 0.  0.  0.]
+#  [ 3.  3.  3.]]
+
+# [[ 7.  7.  7.]
+#  [ 6.  6.  6.]
+#  [ 8.  8.  8.]
+#  [ 9.  9.  9.]]]
+
+#3 Combines the sequence according to the specified format
+structure = ((3, 4), 5, (6, 7, (9, 10), 8))
+flat = ["a", "b", "c", "d", "e", "f", "g", "h"]
+packed = nest.pack_sequence_as(structure, flat)
+assert packed == (('a', 'b'), 'c', ('d', 'e', ('f', 'g'), 'h'))
