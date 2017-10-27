@@ -614,9 +614,20 @@ with tf.Session() as sess:
 outputs = np.asarray([[[0, 0, 0], [1, 1, 1], [2, 2, 2], [3, 3, 3]],
                     [[6, 6, 6], [7, 7, 7], [8, 8, 8], [9, 9, 9]]],
                     dtype=np.float32)
+weight = np.asarray([[2, 2, 2], [2, 2, 2]], dtype=np.float32)
 
+#attention = tf.matmul(outputs, weight)
+#use the above statement directly, error: Shape must be rank 2 but is rank 3 for 
+#'MatMul_1' (op: 'MatMul') with input shapes: [2,4,3], [2,3].
+weight_expand = tf.expand_dims(weight, 1)
+tmp = weight_expand * outputs
+attention = tf.reduce_sum(tmp, 2)
 
-
+with tf.Session() as sess:
+    print sess.run(attention)
+    
+# [[  0.   6.  12.  18.]
+#  [ 36.  42.  48.  54.]]
 
 #Four. Sequence operations
 #structure:
