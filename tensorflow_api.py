@@ -757,6 +757,7 @@ with tf.Graph().as_default():
 #with respect to clip_by_norm and clip_by_global_norm, both can be used to clip the gradients,
 #use as above
 #but in rnn you had better use clip_by_global_norm
+#both of the two clip method are used, sketch rnn use clip_by_norm, nmt use clip_by_global_norm
 
 clip_norm = tf.clip_by_norm(tf.constant([-2, 3, 6], dtype=tf.float32), 5.0)
 clip_global_norm = tf.clip_by_global_norm(
@@ -765,11 +766,11 @@ clip_global_norm = tf.clip_by_global_norm(
 session = tf.Session()
 clip_norm_, clip_global_norm_ = session.run([clip_norm, clip_global_norm])
 
-clip_norm_: clip_norm = 5.0, L2 norm = 7.0
-[-1.42857146  2.14285731  4.28571463] = [-2, 3, 6] * 5 / 7
-clip_global_norm_: clip_norm = 14.5 L2 norm = 7.0, 14.0
-([array([-1.85274196, 2.77911282, 5.55822563], dtype=float32), 
-  array([-3.70548391, 5.55822563, 11.11645126],dtype=float32)], 
-  global_norm, 15.652476) 
-clip_global_norm_ = [-2, 3, 6] * 14.5 / 15.65, [-4, 6, 12] * 14.5 / 15.65
-global_norm = sqrt(7^2 + 14^2) = 15.652476
+# clip_norm_: clip_norm = 5.0, L2 norm = 7.0
+# [-1.42857146  2.14285731  4.28571463] = [-2, 3, 6] * 5 / 7
+# clip_global_norm_: clip_norm = 14.5 L2 norm = 7.0, 14.0
+# ([array([-1.85274196, 2.77911282, 5.55822563], dtype=float32), 
+#   array([-3.70548391, 5.55822563, 11.11645126],dtype=float32)], 
+#   global_norm, 15.652476) 
+# clip_global_norm_ = [-2, 3, 6] * 14.5 / 15.65, [-4, 6, 12] * 14.5 / 15.65
+# global_norm = sqrt(7^2 + 14^2) = 15.652476
