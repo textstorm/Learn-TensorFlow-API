@@ -767,7 +767,8 @@ clip_norm_, clip_global_norm_ = session.run([clip_norm, clip_global_norm])
 
 clip_norm_: clip_norm = 5.0, L2 norm = 7.0
 [-1.42857146  2.14285731  4.28571463] = [-2, 3, 6] * 5 / 7
-clip_global_norm_: 
+clip_global_norm_: clip_norm = 14.5 L2 norm = 7.0, 14.0
 ([array([-1.85274196, 2.77911282, 5.55822563], dtype=float32), 
   array([-3.70548391, 5.55822563, 11.11645126],dtype=float32)], 
-  15.652476)
+  global_norm, 15.652476) 
+global_norm = sqrt(7^2 + 14^2) = 15.652476
