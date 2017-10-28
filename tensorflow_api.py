@@ -713,6 +713,7 @@ with tf.Graph().as_default():
 #[array([ 2.,  4.,  6.,  8.], dtype=float32)]
 
 #3.Apply the gradient
+#this method can use tf.clip_by_global_norm
 with tf.Graph().as_default():
   x = tf.Variable([1, 2, 3, 4], dtype=tf.float32)
   y = x ** 2
@@ -732,16 +733,26 @@ with tf.Graph().as_default():
 #x_: [ 0.45227742  0.90455484  1.35683227  1.80910969]
 
 #Apply the gradient the second method
+#compute_gradients(y) is suited for tf._clip_by_norm
 with tf.Graph().as_default():
   x = tf.Variable([1, 2, 3, 4], dtype=tf.float32)
   y = x ** 2
   opt = tf.train.GradientDescentOptimizer(learning_rate=1.0)
   grads_and_vars = opt.compute_gradients(y)
-  grads_and_vars = [(tf.clip_by_global_norm(g, clip_norm=3.0),v) for g, v in grads_and_vars]
+  #grads_and_vars = [(tf.clip_by_global_norm(g, clip_norm=3.0), v), for g, v in grads_and_vars]
+  grads_and_vars = [(tf.clip_by_norm(g, clip_norm=3.0), v) for g, v in grads_and_vars]
   update = opt.apply_gradients(grads_and_vars)
   session = tf.Session()
   session.run(tf.global_variables_initializer())
-  g_cliped_, update_ = session.run([g_cliped, update])
+  grads_and_vars_, _ = session.run([grads_and_vars, update])
   x_ = session.run(x)
-  print g_cliped_
+  print grads_and_vars_
   print x_
+
+# [(array([ 0.54772258,  1.09544516,  1.64316761,  2.19089031], dtype=float32), 
+#   array([ 1.,2.,3.,4.], dtype=float32))]
+# [ 0.45227742  0.90455484  1.35683239  1.80910969]
+
+#attention:
+#with respect to clip_by_norm and clip_by_global_norm, both can be used to clip the gradients,
+#use as above
