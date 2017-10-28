@@ -771,4 +771,5 @@ clip_global_norm_: clip_norm = 14.5 L2 norm = 7.0, 14.0
 ([array([-1.85274196, 2.77911282, 5.55822563], dtype=float32), 
   array([-3.70548391, 5.55822563, 11.11645126],dtype=float32)], 
   global_norm, 15.652476) 
+clip_global_norm_ = [-2, 3, 6] * 14.5 / 15.65, [-4, 6, 12] * 14.5 / 15.65
 global_norm = sqrt(7^2 + 14^2) = 15.652476
