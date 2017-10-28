@@ -733,7 +733,7 @@ with tf.Graph().as_default():
 #x_: [ 0.45227742  0.90455484  1.35683227  1.80910969]
 
 #Apply the gradient the second method
-#compute_gradients(y) is suited for tf._clip_by_norm
+
 with tf.Graph().as_default():
   x = tf.Variable([1, 2, 3, 4], dtype=tf.float32)
   y = x ** 2
@@ -756,3 +756,15 @@ with tf.Graph().as_default():
 #attention:
 #with respect to clip_by_norm and clip_by_global_norm, both can be used to clip the gradients,
 #use as above
+#but in rnn you had better use clip_by_global_norm
+
+clip_norm = tf.clip_by_norm(tf.constant([-2, 3, 6], dtype=tf.float32), 5.0)
+clip_global_norm = tf.clip_by_global_norm(
+  [tf.constant([-2, 3, 6], dtype=tf.float32),
+  tf.constant([-4, 6, 12], dtype=tf.float32)], 14.5)
+session = tf.Session()
+clip_norm_, clip_global_norm_ = session.run([clip_norm, clip_global_norm])
+
+clip_norm_: clip_norm = 5.0, L2 norm = 7.0
+[-1.42857146  2.14285731  4.28571463] = [-2, 3, 6] * 5 / 7
+clip_global_norm_: 
