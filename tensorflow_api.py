@@ -774,3 +774,25 @@ clip_norm_, clip_global_norm_ = session.run([clip_norm, clip_global_norm])
 #   global_norm, 15.652476) 
 # clip_global_norm_ = [-2, 3, 6] * 14.5 / 15.65, [-4, 6, 12] * 14.5 / 15.65
 # global_norm = sqrt(7^2 + 14^2) = 15.652476
+
+#Five.data feeding
+#approach 1
+#this approach can be very efficient, but isn't flexible.if you use your model with
+#another dataset you have to rewrite the graph.
+#also,you have to load all the data at once and keep in memory, in sever it may be ok,
+#but it word oom in your PC
+actual_data = np.ones(10).astype("int32")
+data = tf.constant(actual_data)
+result = data * 2
+with tf.Session() as sess:
+  print sess.run(result)
+
+#approach 2
+#you can read data from disk, solved the problems in above mothod
+#now i use placeholder and load data in memory, ...
+data = tf.placeholder(tf.float32)
+prediction = tf.square(data) + 1
+actual_data = np.random.normal(size=[100])
+tf.Session().run(prediction, feed_dict={data: actual_data})
+
+#approach 3
