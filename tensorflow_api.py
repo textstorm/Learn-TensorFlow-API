@@ -40,6 +40,12 @@ a_rep = tf.contrib.seq2seq.tile_batch(ta, 3)
 session = tf.Session()
 print a_rep.eval(session=session)
 
+#slice matrix into a list of vectors at once
+#slice operation is very inefficient
+sess = tf.Session()
+x = tf.random_uniform([4, 3])
+for i in tf.unstack(x):
+  print sess.run(i)
 
 #Two. Variables and operations
 #structure
