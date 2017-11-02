@@ -783,6 +783,10 @@ clip_norm_, clip_global_norm_ = session.run([clip_norm, clip_global_norm])
 
 #Five.data feeding
 #approach 1
+#approach 2
+#approach 3
+
+#approach 1
 #this approach can be very efficient, but isn't flexible.if you use your model with
 #another dataset you have to rewrite the graph.
 #also,you have to load all the data at once and keep in memory, in sever it may be ok,
@@ -802,3 +806,110 @@ actual_data = np.random.normal(size=[100])
 tf.Session().run(prediction, feed_dict={data: actual_data})
 
 #approach 3
+#next chapter lookup
+
+#Six. tf.contrib.lookup
+#1.tf.contrib.lookup.index_table_from_tensor
+#2.tf.contrib.lookup.index_table_from_file
+
+#1.tf.contrib.lookup.index_table_from_tensor
+import random
+index_ = random.sample(range(100), 10)
+vocab_table = tf.cast(tf.contrib.lookup.index_table_from_tensor(tf.constant(index2word)), tf.int32)
+vocab_id = vocab_table.lookup(tf.constant(index2word[index_]))
+table_initializer = tf.tables_initializer()
+with tf.Session() as session:
+  session.run(table_initializer)
+  print session.run(vocab_id)
+
+#2.tf.contrib.lookup.index_table_from_file
+def vocab_write(index2word):
+  f = open("vocab.txt", 'w')
+  for word in index2word:
+    f.write(word + "\n")
+  f.close()
+
+import random
+index_ = random.sample(range(100), 10)
+vocab_table = tf.contrib.lookup.index_table_from_file(vocabulary_file="vocab.txt")
+vocab_id = vocab_table.lookup(tf.constant(index2word[index_]))
+table_initializer = tf.tables_initializer()
+with tf.Session() as session:
+  session.run(table_initializer)
+  print session.run(vocab_id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+dataset = tf.contrib.data.Dataset.from_tensor_slices(tf.constant(chat_data))
+
+hparams = tf.contrib.training.HParams(
+  random_seed=3,
+  num_buckets=5,
+  source_reverse=False,
+  eos="eos",
+  sos="sos")
+
+batch_size = 2
+src_max_len = 3
+
+iterator = iterator_utils.get_iterator(
+  src_dataset=src_dataset,
+  tgt_dataset=tgt_dataset,
+  src_vocab_table=src_vocab_table,
+  tgt_vocab_table=tgt_vocab_table,
+  batch_size=batch_size,
+  sos=hparams.sos,
+  eos=hparams.eos,
+  source_reverse=hparams.source_reverse,
+  random_seed=hparams.random_seed,
+  num_buckets=hparams.num_buckets,
+  src_max_len=src_max_len)
+
+table_initializer = tf.tables_initializer()
+source = iterator.source
+target_input = iterator.target_input
+target_output = iterator.target_output
+src_seq_len = iterator.source_sequence_length
+tgt_seq_len = iterator.target_sequence_length
+self.assertEqual([None, None], source.shape.as_list())
+self.assertEqual([None, None], target_input.shape.as_list())
+self.assertEqual([None, None], target_output.shape.as_list())
+self.assertEqual([None], src_seq_len.shape.as_list())
+self.assertEqual([None], tgt_seq_len.shape.as_list())
+with self.test_session() as sess:
+  sess.run(table_initializer)
+  sess.run(iterator.initializer)
+
+  (source_v, src_len_v, target_input_v, target_output_v, tgt_len_v) = (
+      sess.run((source, src_seq_len, target_input, target_output,
+                tgt_seq_len)))
+  self.assertAllEqual(
+      [[-1, -1, 0], # "f" == unknown, "e" == unknown, a
+       [2, 0, 3]],  # c a eos -- eos is padding
+      source_v)
+  self.assertAllEqual([3, 2], src_len_v)
+  self.assertAllEqual(
+      [[4, 2, 2],   # sos c c
+       [4, 1, 2]],  # sos b c
+      target_input_v)
+  self.assertAllEqual(
+      [[2, 2, 3],   # c c eos
+       [1, 2, 3]],  # b c eos
+      target_output_v)
+  self.assertAllEqual([3, 3], tgt_len_v)
