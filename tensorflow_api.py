@@ -806,9 +806,14 @@ actual_data = np.random.normal(size=[100])
 tf.Session().run(prediction, feed_dict={data: actual_data})
 
 #approach 3
-#next chapter lookup
+#next chapter data
 
-#Six. tf.contrib.lookup
+#six. tf.data
+src_dataset = tf.data.Dataset.from_tensor_slices(tf.constant(src_data))
+tgt_dataset = tf.data.Dataset.from_tensor_slices(tf.constant(tgt_data))
+src_tgt_vocab = lookup_ops.index_table_from_tensor(tf.constant(index2vocab), default_value=0)
+
+#Seven. tf.contrib.lookup
 #1.tf.contrib.lookup.index_table_from_tensor
 #2.tf.contrib.lookup.index_table_from_file
 
