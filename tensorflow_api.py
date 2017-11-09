@@ -47,6 +47,18 @@ x = tf.random_uniform([4, 3])
 for i in tf.unstack(x):
   print sess.run(i)
 
+#4 other operation
+x = tf.constant([1, 4])
+y = tf.constant([2, 5])
+z = tf.constant([3, 6])
+with tf.Session() as sess:
+  print sess.run(tf.stack([x, y, z]))
+  print sess.run(tf.stack(x))         #[1, 4]
+  print sess.run(tf.stack([x]))       #[[1, 4]]
+# [[1 4]
+#  [2 5]
+#  [3 6]]
+
 #Two. Variables and operations
 #structure
 #1. variable and get_variable
