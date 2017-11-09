@@ -861,4 +861,13 @@ with tf.Session() as session:
 #1.condition
 #if condition is true return x, else return y
 #tf.where(condition, x=None, y=None, name=None)
+#tf.cond(pred, true_fn=None, false_fn=None, strict=False, name=None, fn1=None, fn2=None)
+#compare with tf.where, tf.cond x,y is func(callable)
 tmp = tf.where(5>7, "True", "Flase")
+
+a = tf.constant(5)
+b = tf.constant(7)
+x = tf.constant(2)
+y = tf.constant(5)
+z = tf.multiply(a, b)
+tmp = tf.cond(tf.cast(x<y, tf.bool), lambda: tf.add(x, z), lambda: tf.square(y))
